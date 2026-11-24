@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🧩 Maze Adventure – เกมเขาวงกตผจญภัย</title>
+  <meta name="description" content="เกมเขาวงกตผจญภัย 5 ด่าน">
+  <link rel="icon" type="image/x-icon" href="c.jpg">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Chakra Petch|Poppins|Krub|Sofia">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+  <div id="bg-pattern"></div>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <div id="start-screen" class="screen active">
+    <div class="logo-badge">🧩 PUZZLE GAME</div>
+    <div class="game-logo">เขาวงกตผจญภัย</div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" id="btn-start">▶ เริ่มเล่นเกม</button>
+      <button class="btn btn-secondary" id="btn-howto">📖 วิธีการเล่น</button>
+    </div>
+
+    <div class="highscore-badge">
+      🏆 สถิติสูงสุดของคุณ: <span id="start-highscore">0</span> คะแนน
+    </div>
+  </div>
+
+  <div id="howto-screen" class="screen">
+    <div class="howto-container">
+      <div class="howto-title">📖 วิธีเล่น</div>
+
+      <div class="howto-grid">
+        <div class="howto-card">
+          <h3>⌨️ การควบคุม</h3>
+          <ul>
+            <li>ลูกศร ↑↓←→ หรือ WASD</li>
+            <li>ปุ่ม D-Pad บนหน้าจอ</li>
+            <li>ปัดนิ้ว (Swipe) บนมือถือ</li>
+          </ul>
+        </div>
+
+        <div class="howto-card">
+          <h3>🎨 วัตถุในเกม</h3>
+          <div class="legend-item">
+            <div class="legend-box" style="background:#2563eb;border-radius:50%;border:2px solid #fff"></div>
+            ตัวละครผู้เล่น (คุณ)
+          </div>
+          <div class="legend-item">
+            <div class="legend-box" style="background:#10b981;border-radius:4px"></div>
+            ประตูทางออก (เป้าหมาย)
+          </div>
+          <div class="legend-item">
+            <div class="legend-box" style="background:#f59e0b;border-radius:50%"></div>
+            กุญแจ (เก็บเพื่อเปิดประตู)
+          </div>
+          <div class="legend-item">
+            <div class="legend-box" style="background:#f97316;border-radius:4px"></div>
+            กับดัก (เสียเวลา 3 วิ ⚡)
+          </div>
+          <div class="legend-item">
+            <div class="legend-box" style="background:#ef4444;border-radius:50%"></div>
+            ศัตรูลาดตระเวน (อย่าชน!)
+          </div>
+        </div>
+      </div>
+
+      <div class="howto-card" style="margin-bottom:1rem">
+        <h3>🗺️ ระบบด่าน (ระดับความยากง่าย-สบาย)</h3>
+        <table class="level-table">
+          <thead>
+            <tr>
+              <th>ด่าน</th>
+              <th>ขนาด</th>
+              <th>เวลา</th>
+              <th>รายละเอียด</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>8×8</td>
+              <td>120 วิ</td>
+              <td>เริ่มต้นผจญภัย เดินทางง่าย 🌟</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>11×11</td>
+              <td>110 วิ</td>
+              <td>มีกับดัก 1 จุด ⚡ (-3 วิ)</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>13×13</td>
+              <td>100 วิ</td>
+              <td>กับดัก 2 จุด + กุญแจ 1 ดอก 🔑</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>15×15</td>
+              <td>90 วิ</td>
+              <td>กุญแจ + ศัตรูเคลื่อนที่ช้า 👾</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>17×17</td>
+              <td>80 วิ</td>
+              <td>โหมดมืดไฟฉายส่องสว่าง 🔦</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="howto-card" style="margin-bottom:1.5rem">
+        <h3>⭐ ระบบคะแนน</h3>
+        <p>คะแนนต่อด่าน = (เวลาที่เหลือ × 10) + (ด่าน × 100)<br>
+        ยิ่งเดินถึงทางออกไว ยิ่งได้คะแนนสูง!</p>
+      </div>
+
+      <button class="btn btn-primary" id="btn-back-from-howto">← กลับ</button>
+    </div>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <!-- แถบสถานะ -->
+    <div id="status-bar">
+      <div class="status-item">
+        <span class="status-label">ด่าน</span>
+        <span class="status-value" id="level-badge">1</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">เวลา</span>
+        <span class="status-value" id="timer-display">120</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">คะแนน</span>
+        <span class="status-value" id="score-display">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">กุญแจ</span>
+        <span class="status-value key-display" id="key-display">–</span>
+      </div>
+      <button id="quit-btn">✕ ออก</button>
+    </div>
+
+    <div id="canvas-wrapper">
+      <canvas id="maze-canvas" style="position:relative;z-index:1"></canvas>
+      <canvas id="dark-overlay"></canvas>
+    </div>
+
+    <div id="dpad">
+      <div></div>
+      <button class="dpad-btn" id="dpad-up" data-dir="up">▲</button>
+      <div></div>
+      <button class="dpad-btn" id="dpad-left" data-dir="left">◀</button>
+      <div class="dpad-center dpad-btn"></div>
+      <button class="dpad-btn" id="dpad-right" data-dir="right">▶</button>
+      <div></div>
+      <button class="dpad-btn" id="dpad-down" data-dir="down">▼</button>
+      <div></div>
+    </div>
+  </div>
+
+  <div id="end-screen" class="screen">
+    <div class="end-container">
+      <div class="end-trophy">🏆</div>
+      <div class="end-title">ยินดีด้วย! คุณชนะแล้ว!</div>
+      <div class="end-subtitle">พิชิตเขาวงกตครบทั้ง 5 ด่านสำเร็จ 🎉</div>
+
+      <div id="end-new-record" class="new-record-badge hidden">🎉 สถิติสูงสุดใหม่!</div>
+
+      <div class="end-stats-box">
+        <div class="score-row">
+          <span class="label">คะแนนรวมทั้งหมด</span>
+          <span class="value text-yellow" id="final-score">0</span>
+        </div>
+        <div class="score-row">
+          <span class="label">เวลารวมที่ใช้</span>
+          <span class="value text-green" id="final-time">0 วิ</span>
+        </div>
+        <div class="score-row">
+          <span class="label">สถิติสูงสุดของคุณ</span>
+          <span class="value" id="final-highscore">0</span>
+        </div>
+      </div>
+
+      <div class="end-buttons">
+        <button class="btn btn-primary" id="btn-play-again">▶ เล่นใหม่อีกครั้ง</button>
+        <button class="btn btn-secondary" id="btn-back-to-menu">🏠 เมนูหลัก</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="level-transition">
+    <div class="transition-text" id="transition-text">ด่านที่ 1</div>
+    <div class="transition-sub" id="transition-sub">กำลังสร้างเขาวงกต...</div>
+    <div class="loading-ring"></div>
+  </div>
+
+  <div class="modal-overlay" id="modal-clear">
+    <div class="modal-box">
+      <div class="modal-icon">🎉</div>
+      <div class="modal-title text-green" id="clear-title">ผ่านด่านแล้ว!</div>
+      <div class="modal-score-box" id="clear-scores">
+        <div class="score-row">
+          <span class="label">เวลาคงเหลือ</span>
+          <span class="value" id="clear-time-left">+0</span>
+        </div>
+        <div class="score-row">
+          <span class="label">โบนัสด่าน</span>
+          <span class="value" id="clear-level-bonus">+0</span>
+        </div>
+        <div class="score-row">
+          <span class="label">คะแนนด่านนี้</span>
+          <span class="value text-green" id="clear-level-score">+0</span>
+        </div>
+        <div class="score-row" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:0.4rem;padding-top:0.4rem">
+          <span class="label" style="font-weight:700">คะแนนสะสมรวม</span>
+          <span class="value text-yellow" id="clear-total-score">0</span>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary" id="btn-next-level">▶ ด่านต่อไป</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-over">
+    <div class="modal-box">
+      <div class="modal-icon" id="over-icon">💀</div>
+      <div class="modal-title text-pink" id="over-title">จบเกม!</div>
+      <div class="over-reason" id="over-reason" style="color:var(--text-muted);font-size:0.95rem;margin-bottom:0.8rem">หมดเวลา!</div>
+      <div class="modal-score-box">
+        <div class="score-row">
+          <span class="label">คะแนนสะสมจนถึงตอนนี้</span>
+          <span class="value text-yellow" id="over-score">0</span>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary" id="btn-retry">🔄 เล่นด่านนี้อีกครั้ง</button>
+        <button class="btn btn-secondary" id="btn-over-menu">🏠 เมนูหลัก</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+
+</body>
+
+</html>
